@@ -1,0 +1,83 @@
+import sqlite3
+
+# Подключение к базе данных (файл базы данных будет создан, если его нет)
+conn = sqlite3.connect('apartments.db')
+
+# Создание таблицы квартир
+conn.execute('''CREATE TABLE IF NOT EXISTS apartments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    address TEXT NOT NULL,
+    rooms INTEGER NOT NULL,
+    total_area REAL NOT NULL,
+    living_area REAL NOT NULL,
+    floor INTEGER NOT NULL,
+    total_floors INTEGER NOT NULL,
+    owner_lastname TEXT NOT NULL,
+    price INTEGER NOT NULL)''')
+
+
+
+# Добавление примеров квартир в базу данных
+
+#ня
+# Задаем количество квартир
+num_flats = int(input("Введите количество квартир в списке риелтовского агенства: "))
+
+# Создаем список для хранения данных о квартирах
+flats = []
+
+# Цикл для ввода данных о каждой квартире
+for i in range(num_flats):
+  print(f"\nВведите данные о квартире {i + 1}:")
+  address=input("Введите адрес квартиры: ")
+  rooms = int(input("Введите количество комнат: "))
+  total_area=int(input("Введите общую плащадь в квартире: "))
+  living_area=int(input("Введите жилую площадь в квартире: "))
+  floor = int(input("Введите этаж: "))
+  total_floors = int(input("Введите общее количество этажей в доме: "))
+  owner_lastname=input("Введите фамилию владельца квартиры: ")
+  price = float(input("Введите стоимость: "))
+
+  # Добавляем данные о квартире в список
+  flats.append(
+    {"Адрес":address, "Количество комнат": rooms, "Этаж": floor, "Общее количество этажей в доме": total_floors, "Стоимость": price})
+
+# Вывод данных о всех квартирах
+print("\nВы ввели следующие данные о квартирах:")
+for flat in flats:
+  print(flat)
+
+#ня
+
+# Получение полного списка квартир, сортированных по количеству комнат и стоимости
+def get_sorted_apartments_by_rooms_and_price():
+  cursor = conn.execute("SELECT * FROM apartments ORDER BY {} DESC, {} ASC".format(sqlite3.quote('rooms'), sqlite3.quote('price')))
+  return cursor.fetchall()
+
+# Получение списка квартир с заданным количеством комнат, отсортированных по этажу, этажности и стоимости
+def get_sorted_apartments_by_rooms(N_rooms):
+  cursor = conn.execute("SELECT * FROM apartments WHERE {} = ? ORDER BY {}, {}, {} DESC".format(sqlite3.quote('rooms'), sqlite3.quote('floor'), sqlite3.quote('total_floors'), sqlite3.quote('price')), (num_rooms,))
+  return cursor.fetchall()
+
+# Получение списка квартир с заданной стоимостью в диапазоне
+def get_apartments_in_price_range(min_price, max_price):
+  cursor = conn.execute("SELECT * FROM apartments WHERE {} BETWEEN ? AND ? ORDER BY {}, {} ASC".format(sqlite3.quote('price'), sqlite3.quote('price'), sqlite3.quote('price')), (min_price, max_price))
+  return cursor.fetchall()
+
+# Пример использования функций
+print("Список всех квартир, отсортированный по количеству комнат и стоимости:")
+print(get_sorted_apartments_by_rooms_and_price())
+
+N_rooms=int(input('Введите интересующее количесво комнат в квартире: '))
+
+print(f"\nСписок квартир с {N_rooms} комнатами, отсортированный по этажу, этажности и стоимости:")
+print(get_sorted_apartments_by_rooms(2))
+
+min_price=int(input('Введите минимальную сумму за квартиру: '))
+max_price=int(input('Введите максимальную сумму за квартиру: '))
+
+print(f"\nСписок квартир в ценовом диапазоне от {min_price} до {max_price} рублей:")
+print(get_apartments_in_price_range(min_price,max_price))
+
+# Закрытие соединения
+conn.close()
