@@ -1,3 +1,5 @@
+#Код пока что не готов
+
 import sqlite3
 
 def create_connection():
