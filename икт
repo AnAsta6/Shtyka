@@ -1,83 +1,195 @@
 import sqlite3
 
-# Подключение к базе данных (файл базы данных будет создан, если его нет)
-conn = sqlite3.connect('apartments.db')
+def create_connection():
+    conn = sqlite3.connect('apartments.db')
+    return conn
 
-# Создание таблицы квартир
-conn.execute('''CREATE TABLE IF NOT EXISTS apartments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    address TEXT NOT NULL,
-    rooms INTEGER NOT NULL,
-    total_area REAL NOT NULL,
-    living_area REAL NOT NULL,
-    floor INTEGER NOT NULL,
-    total_floors INTEGER NOT NULL,
-    owner_lastname TEXT NOT NULL,
-    price INTEGER NOT NULL)''')
+def create_table(conn):
+    conn.execute('''CREATE TABLE IF NOT EXISTS apartments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    address TEXT NOT NULL,
+                    rooms INTEGER NOT NULL,
+                    total_area REAL NOT NULL,
+                    living_area REAL NOT NULL,
+                    floor INTEGER NOT NULL,
+                    total_floors INTEGER NOT NULL,
+                    owner_lastname TEXT NOT NULL,
+                    price INTEGER NOT NULL)''')
+
+def insert_apartment(conn, apartment):
+    cursor = conn.cursor()
+    cursor.execute("""
+                   INSERT INTO apartments (address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                   """, (apartment['address'], apartment['rooms'], apartment['total_area'], 
+                         apartment['living_area'], apartment['floor'], apartment['total_floors'], 
+                         apartment['owner_lastname'], apartment['price']))
+    conn.commit()
+
+def get_apartments(conn, sort_by_rooms=True, sort_by_price=False, min_rooms=None, max_rooms=None, min_price=None, max_price=None):
+    cursor = conn.execute("""
+                           SELECT * FROM apartments
+                           WHERE (rooms BETWEEN ? AND ?) AND (price BETWEEN ? AND ?)
+                           ORDER BY rooms DESC, price ASC, total_area ASC
+                           """, (min_rooms, max_rooms, min_price, max_price))
+    apartments = cursor.fetchall()
+    if sort_by_rooms:
+        apartments = sorted(apartments, key=lambda x: x[2])
+    if sort_by_price:
+        apartments = sorted(apartments, key=lambda x: x[7], reverse=True)
+    return apartments
+
+def shell_sort(apartments, key):
+    n = len(apartments)
+    gap = n // 2
+    while gap > 0:
+        for i in range(gap, n):
+            temp = apartments[i]
+            j = i
+            while j >= gap and temp[key] < apartments[j - gap][key]:
+                apartments[j] = apartments[j - gap]
+                j -= gap
+            apartments[j] = temp
+        gap //= 2
+
+def print_menu():
+    print("\n1. Добавить квартиры")
+    print("2. Получить отсортированный список всех квартир")
+    print("3. Получит отсортированный список квартир по количеству комнат")
+    print("4. Получить отсортированный список квартир по ценовому диапазону")
+    print("5. Выход")
+
+def main():
+    conn = create_connection()
+    create_table(conn)
+
+    while True:
+        print_menu()
+        choice = int(input("Введите номер своего выбора: "))
+        if choice == 1:
+            num_flats = int(input("Введите количество квартир для добавления: "))
+            for i in range(num_flats):
+                apartment = {}
+                address = input("Введите адрес квартиры: ")
+                apartment['address'] = address
+                rooms = int(input("Введите количество комнат в квартире: "))
+                apartment['rooms'] = rooms
+                total_area = float(input("Введите общую площадь в квартире: "))
+                apartment['total_area'] = total_area
+                living_area = float(input("Введите жилую площадь в квартире: "))
+                apartment['living_area'] = living_area
+                floor = int(input("Введите этаж: "))
+                apartment['floor'] = floor
+                total_floors = int(input("Введите общее количество этажей в доме: "))
+                apartment['total_floors'] = total_floors
+                owner_lastname = input("Введите фамилию владельца квартиры: ")
+                apartment['owner_lastname'] = owner_lastname
+                price = int(input("Введите стоимость квартиры: "))
+                apartment['price'] = price
+                insert_apartment(conn, apartment)
 
 
+        elif choice == 2:
+            def shell_sort(apartments, key):
+                n = len(apartments)
+                gap = n // 2
+                while gap > 0:
+                    for i in range(gap, n):
+                        temp = apartments[i]
+                        j = i
+                        while j >= gap and (temp[key[0]] > apartments[j - gap][key[0]] or (
+                                temp[key[0]] == apartments[j - gap][key[0]] and temp[key[1]] < apartments[j - gap][
+                            key[1]])):
+                            apartments[j] = apartments[j - gap]
+                            j -= gap
+                        apartments[j] = temp
+                    gap //= 2
 
-# Добавление примеров квартир в базу данных
+            def get_sorted_apartments(conn):
+                cursor = conn.execute("SELECT * FROM apartments")
+                apartments = cursor.fetchall()
+                shell_sort(apartments, ('rooms', 'price'))
+                return apartments
 
-#ня
-# Задаем количество квартир
-num_flats = int(input("Введите количество квартир в списке риелтовского агенства: "))
+            # Usage
+            conn = sqlite3.connect('apartments.db')
+            sorted_apartments = get_sorted_apartments(conn)
+            for apartment in sorted_apartments:
+                print(apartment)
+            conn.close()
 
-# Создаем список для хранения данных о квартирах
-flats = []
 
-# Цикл для ввода данных о каждой квартире
-for i in range(num_flats):
-  print(f"\nВведите данные о квартире {i + 1}:")
-  address=input("Введите адрес квартиры: ")
-  rooms = int(input("Введите количество комнат: "))
-  total_area=int(input("Введите общую плащадь в квартире: "))
-  living_area=int(input("Введите жилую площадь в квартире: "))
-  floor = int(input("Введите этаж: "))
-  total_floors = int(input("Введите общее количество этажей в доме: "))
-  owner_lastname=input("Введите фамилию владельца квартиры: ")
-  price = float(input("Введите стоимость: "))
+        elif choice == 3:
+            def shell_sort(apartments, key):
+                n = len(apartments)
+                gap = n // 2
+                while gap > 0:
+                    for i in range(gap, n):
+                        temp = apartments[i]
+                        j = i
+                        while j >= gap and (temp[key[0]] > apartments[j - gap][key[0]] or (
+                                temp[key[0]] == apartments[j - gap][key[0]] and (
+                                temp[key[1]] > apartments[j - gap][key[1]] or (
+                                temp[key[1]] == apartments[j - gap][key[1]] and temp[key[2]] < apartments[j - gap][
+                            key[2]])))):
+                            apartments[j] = apartments[j - gap]
+                            j -= gap
+                        apartments[j] = temp
+                    gap //= 2
 
-  # Добавляем данные о квартире в список
-  flats.append(
-    {"Адрес":address, "Количество комнат": rooms, "Этаж": floor, "Общее количество этажей в доме": total_floors, "Стоимость": price})
+            def get_sorted_apartments(conn, num_rooms):
+                cursor = conn.execute("SELECT * FROM apartments WHERE rooms = ?", (num_rooms,))
+                apartments = cursor.fetchall()
+                shell_sort(apartments, ('floor', 'floors_in_building', 'price'))
+                return apartments
 
-# Вывод данных о всех квартирах
-print("\nВы ввели следующие данные о квартирах:")
-for flat in flats:
-  print(flat)
+            # Usage
+            conn = sqlite3.connect('apartments.db')
+            num_rooms = int(input("Введите интересующее количесво комнат в квартире:: "))
+            sorted_apartments = get_sorted_apartments(conn, num_rooms)
+            for apartment in sorted_apartments:
+                print(apartment)
+            conn.close()
 
-#ня
 
-# Получение полного списка квартир, сортированных по количеству комнат и стоимости
-def get_sorted_apartments_by_rooms_and_price():
-  cursor = conn.execute("SELECT * FROM apartments ORDER BY {} DESC, {} ASC".format(sqlite3.quote('rooms'), sqlite3.quote('price')))
-  return cursor.fetchall()
+        elif choice == 4:
 
-# Получение списка квартир с заданным количеством комнат, отсортированных по этажу, этажности и стоимости
-def get_sorted_apartments_by_rooms(N_rooms):
-  cursor = conn.execute("SELECT * FROM apartments WHERE {} = ? ORDER BY {}, {}, {} DESC".format(sqlite3.quote('rooms'), sqlite3.quote('floor'), sqlite3.quote('total_floors'), sqlite3.quote('price')), (num_rooms,))
-  return cursor.fetchall()
+            def shell_sort(apartments, key):
+                n = len(apartments)
+                gap = n // 2
+                while gap > 0:
+                    for i in range(gap, n):
+                        temp = apartments[i]
+                        j = i
+                        while j >= gap and (temp[key[0]] < apartments[j - gap][key[0]] or (
+                                temp[key[0]] == apartments[j - gap][key[0]] and temp[key[1]] > apartments[j - gap][
+                            key[1]]))):
+                            apartments[j] = apartments[j - gap]
+                        j -= gap
+                        apartments[j] = temp
+                        gap //= 2
 
-# Получение списка квартир с заданной стоимостью в диапазоне
-def get_apartments_in_price_range(min_price, max_price):
-  cursor = conn.execute("SELECT * FROM apartments WHERE {} BETWEEN ? AND ? ORDER BY {}, {} ASC".format(sqlite3.quote('price'), sqlite3.quote('price'), sqlite3.quote('price')), (min_price, max_price))
-  return cursor.fetchall()
+            def get_sorted_apartments(conn, price_range):
+                cursor = conn.execute("SELECT * FROM apartments WHERE price >= ? AND price <= ?", price_range)
+                apartments = cursor.fetchall()
+                shell_sort(apartments, ('price', 'total_area'))
+                return apartments
 
-# Пример использования функций
-print("Список всех квартир, отсортированный по количеству комнат и стоимости:")
-print(get_sorted_apartments_by_rooms_and_price())
+            # Usage
+            conn = sqlite3.connect('apartments.db')
+            price_range = (int(input("Enter the minimum price: ")), int(input("Enter the maximum price: ")))
+            sorted_apartments = get_sorted_apartments(conn, price_range)
+            for apartment in sorted_apartments:
+                print(apartment)
+            conn.close()
 
-N_rooms=int(input('Введите интересующее количесво комнат в квартире: '))
 
-print(f"\nСписок квартир с {N_rooms} комнатами, отсортированный по этажу, этажности и стоимости:")
-print(get_sorted_apartments_by_rooms(2))
+        elif choice == 5:
+            break
+        else:
+            print("Invalid choice. Please try again.")
 
-min_price=int(input('Введите минимальную сумму за квартиру: '))
-max_price=int(input('Введите максимальную сумму за квартиру: '))
+    conn.close()
 
-print(f"\nСписок квартир в ценовом диапазоне от {min_price} до {max_price} рублей:")
-print(get_apartments_in_price_range(min_price,max_price))
-
-# Закрытие соединения
-conn.close()
+if __name__ == "__main__":
+    main()
