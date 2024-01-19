@@ -1,5 +1,3 @@
-#Код пока что не готов
-
 import sqlite3
 
 def create_connection():
@@ -23,43 +21,58 @@ def insert_apartment(conn, apartment):
     cursor.execute("""
                    INSERT INTO apartments (address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price) 
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                   """, (apartment['address'], apartment['rooms'], apartment['total_area'], 
-                         apartment['living_area'], apartment['floor'], apartment['total_floors'], 
+                   """, (apartment['address'], apartment['rooms'], apartment['total_area'],
+                         apartment['living_area'], apartment['floor'], apartment['total_floors'],
                          apartment['owner_lastname'], apartment['price']))
     conn.commit()
 
-def get_apartments(conn, sort_by_rooms=True, sort_by_price=False, min_rooms=None, max_rooms=None, min_price=None, max_price=None):
-    cursor = conn.execute("""
-                           SELECT * FROM apartments
-                           WHERE (rooms BETWEEN ? AND ?) AND (price BETWEEN ? AND ?)
-                           ORDER BY rooms DESC, price ASC, total_area ASC
-                           """, (min_rooms, max_rooms, min_price, max_price))
-    apartments = cursor.fetchall()
-    if sort_by_rooms:
-        apartments = sorted(apartments, key=lambda x: x[2])
-    if sort_by_price:
-        apartments = sorted(apartments, key=lambda x: x[7], reverse=True)
-    return apartments
-
-def shell_sort(apartments, key):
-    n = len(apartments)
-    gap = n // 2
+def shell_sort(apartments, keys):
+    gap = len(apartments) // 2
     while gap > 0:
-        for i in range(gap, n):
+        for i in range(gap, len(apartments)):
             temp = apartments[i]
             j = i
-            while j >= gap and temp[key] < apartments[j - gap][key]:
+            while j >= gap and all(temp[keys[k]] < apartments[j - gap][keys[k]] for k in range(len(keys))):
                 apartments[j] = apartments[j - gap]
                 j -= gap
             apartments[j] = temp
         gap //= 2
+    return apartments
+
+def get_sorted_apartments(conn, keys):
+    cursor = conn.execute("SELECT * FROM apartments")
+    apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+    return shell_sort(apartments, keys)
+
+def get_sorted_apartments_by_rooms(conn, num_rooms, keys):
+    cursor = conn.execute("SELECT * FROM apartments WHERE rooms = ?", (num_rooms,))
+    apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+    return shell_sort(apartments, keys)
+
+def get_sorted_apartments_by_price_range(conn, price_range, keys):
+    cursor = conn.execute("SELECT * FROM apartments WHERE price >= ? AND price <= ?", price_range)
+    apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+    return shell_sort(apartments, keys)
+
+def delete_apartment(conn, id):
+    query = "DELETE FROM apartments WHERE id = ?"
+    conn.execute(query, (id,))
+    conn.commit()
+
+def update_apartment(conn, id, apartment):
+    query = "UPDATE apartments SET address = ?, rooms = ?, total_area = ?, living_area = ?, floor = ?, total_floors = ?, owner_lastname = ?, price = ? WHERE id = ?"
+    conn.execute(query, apartment + (id,))
+    conn.commit()
 
 def print_menu():
+    print("Выберете функцию из данного списка:")
     print("\n1. Добавить квартиры")
-    print("2. Получить отсортированный список всех квартир")
-    print("3. Получит отсортированный список квартир по количеству комнат")
-    print("4. Получить отсортированный список квартир по ценовому диапазону")
-    print("5. Выход")
+    print("2. Удалить квартиру по ID")
+    print("3. Получить отсортированный список всех квартир")
+    print("4. Получит отсортированный список квартир по количеству комнат")
+    print("5. Получить отсортированный список квартир по ценовому диапазону")
+    print("6. Обновить информацию по ID")
+    print("7. Выход")
 
 def main():
     conn = create_connection()
@@ -68,6 +81,7 @@ def main():
     while True:
         print_menu()
         choice = int(input("Введите номер своего выбора: "))
+
         if choice == 1:
             num_flats = int(input("Введите количество квартир для добавления: "))
             for i in range(num_flats):
@@ -89,47 +103,50 @@ def main():
                 price = int(input("Введите стоимость квартиры: "))
                 apartment['price'] = price
                 insert_apartment(conn, apartment)
-
-
+        
         elif choice == 2:
-            def get_sorted_apartments(conn):
-                cursor = conn.execute("SELECT * FROM apartments")
-                apartments = cursor.fetchall()
-                shell_sort(apartments, ('rooms', 'price'))
-                return apartments
-
-            sorted_apartments = get_sorted_apartments(conn)
-            for apartment in sorted_apartments:
-                print(apartment)
+            id = int(input("Введите ID квартиры для удаления: "))
+            delete_apartment(conn, id)
 
         elif choice == 3:
-            def get_sorted_apartments(conn, num_rooms):
-                cursor = conn.execute("SELECT * FROM apartments WHERE rooms = ?", (num_rooms,))
-                apartments = cursor.fetchall()
-                shell_sort(apartments, ('floor', 'total_floors', 'price'))
-                return apartments
-
-            num_rooms = int(input("Введите интересующее количесво комнат в квартире:: "))
-            sorted_apartments = get_sorted_apartments(conn, num_rooms)
+            keys = ['rooms', 'price']
+            sorted_apartments = get_sorted_apartments(conn, keys)
             for apartment in sorted_apartments:
                 print(apartment)
 
         elif choice == 4:
-            def get_sorted_apartments(conn, price_range):
-                cursor = conn.execute("SELECT * FROM apartments WHERE price >= ? AND price <= ?", price_range)
-                apartments = cursor.fetchall()
-                shell_sort(apartments, ('price', 'total_area'))
-                return apartments
-
-            price_range = (int(input("Enter the minimum price: ")), int(input("Enter the maximum price: ")))
-            sorted_apartments = get_sorted_apartments(conn, price_range)
+            num_rooms = int(input("Введите количество комнат: "))
+            keys = ['floor', 'total_floors', 'price']
+            sorted_apartments = get_sorted_apartments_by_rooms(conn, num_rooms, keys)
             for apartment in sorted_apartments:
                 print(apartment)
 
         elif choice == 5:
+            price_range = tuple(map(int, input("Введите ценовой диапазон (например, 50000 100000): ").split()))
+            keys = ['price']
+            sorted_apartments = get_sorted_apartments_by_price_range(conn, price_range, keys)
+            for apartment in sorted_apartments:
+                print(apartment)
+        
+        elif choice == 6:
+            id = int(input("Введите ID квартиры для обновления: "))
+            address = input("Введите новый адрес квартиры: ")
+            rooms = int(input("Введите новое количество комнат в квартире: "))
+            total_area = float(input("Введите новую общую площадь в квартире: "))
+            living_area = float(input("Введите новую жилую площадь в квартире: "))
+            floor = int(input("Введите новый этаж: "))
+            total_floors = int(input("Введите новое общее количество этажей в доме: "))
+            owner_lastname = input("Введите новую фамилию владельца квартиры: ")
+            price = int(input("Введите новую стоимость квартиры: "))
+            apartment = (address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price)
+            update_apartment(conn, id, apartment)
+
+
+        elif choice == 7:
             break
+
         else:
-            print("Invalid choice. Please try again.")
+            print("Неверный выбор. Пожалуйста, выберите один из предложенных вариантов.")
 
     conn.close()
 
