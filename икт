@@ -1,5 +1,6 @@
 import sqlite3
 
+#создаёт файл под бд
 def create_connection():
     conn = sqlite3.connect('apartments.db')
     return conn
@@ -26,6 +27,8 @@ def insert_apartment(conn, apartment):
                          apartment['owner_lastname'], apartment['price']))
     conn.commit()
 
+
+#сортировка Шелла
 def shell_sort(apartments, keys):
     gap = len(apartments) // 2
     while gap > 0:
@@ -39,31 +42,39 @@ def shell_sort(apartments, keys):
         gap //= 2
     return apartments
 
+# ключи для сортировки
+
+#вывод всей бд
 def get_sorted_apartments(conn, keys):
     cursor = conn.execute("SELECT * FROM apartments")
     apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
     return shell_sort(apartments, keys)
 
+#сортировка по комнатам
 def get_sorted_apartments_by_rooms(conn, num_rooms, keys):
     cursor = conn.execute("SELECT * FROM apartments WHERE rooms = ?", (num_rooms,))
     apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
     return shell_sort(apartments, keys)
 
+#сортировка по цене
 def get_sorted_apartments_by_price_range(conn, price_range, keys):
     cursor = conn.execute("SELECT * FROM apartments WHERE price >= ? AND price <= ?", price_range)
     apartments = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
     return shell_sort(apartments, keys)
 
+#айди
 def delete_apartment(conn, id):
     query = "DELETE FROM apartments WHERE id = ?"
     conn.execute(query, (id,))
     conn.commit()
 
+#айди по квартирам
 def update_apartment(conn, id, apartment):
     query = "UPDATE apartments SET address = ?, rooms = ?, total_area = ?, living_area = ?, floor = ?, total_floors = ?, owner_lastname = ?, price = ? WHERE id = ?"
     conn.execute(query, apartment + (id,))
     conn.commit()
 
+#Меню управления
 def print_menu():
     print("Выберете функцию из данного списка:")
     print("\n1. Добавить квартиры")
@@ -74,6 +85,7 @@ def print_menu():
     print("6. Обновить информацию по ID")
     print("7. Выход")
 
+# работа с меню
 def main():
     conn = create_connection()
     create_table(conn)
@@ -82,6 +94,7 @@ def main():
         print_menu()
         choice = int(input("Введите номер своего выбора: "))
 
+        #добавление квартир
         if choice == 1:
             num_flats = int(input("Введите количество квартир для добавления: "))
             for i in range(num_flats):
@@ -103,17 +116,20 @@ def main():
                 price = int(input("Введите стоимость квартиры: "))
                 apartment['price'] = price
                 insert_apartment(conn, apartment)
-        
+
+        #удоление квартиры по айди
         elif choice == 2:
             id = int(input("Введите ID квартиры для удаления: "))
             delete_apartment(conn, id)
 
+        # отсортированный список всех квартир
         elif choice == 3:
             keys = ['rooms', 'price']
             sorted_apartments = get_sorted_apartments(conn, keys)
             for apartment in sorted_apartments:
                 print(apartment)
 
+        #отсортированный список квартир по количеству комнат
         elif choice == 4:
             num_rooms = int(input("Введите количество комнат: "))
             keys = ['floor', 'total_floors', 'price']
@@ -121,13 +137,15 @@ def main():
             for apartment in sorted_apartments:
                 print(apartment)
 
+        #отсортированный список квартир по ценовому диапазону
         elif choice == 5:
-            price_range = tuple(map(int, input("Введите ценовой диапазон (например, 50000 100000): ").split()))
+            price_range = tuple(map(int, input("Введите ценовой диапазон через пробел(например, 50000 100000): ").split()))
             keys = ['price']
             sorted_apartments = get_sorted_apartments_by_price_range(conn, price_range, keys)
             for apartment in sorted_apartments:
                 print(apartment)
-        
+
+        # Обновить информацию по ID
         elif choice == 6:
             id = int(input("Введите ID квартиры для обновления: "))
             address = input("Введите новый адрес квартиры: ")
@@ -141,14 +159,20 @@ def main():
             apartment = (address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price)
             update_apartment(conn, id, apartment)
 
-
+        # выход
         elif choice == 7:
             break
 
         else:
             print("Неверный выбор. Пожалуйста, выберите один из предложенных вариантов.")
 
+    # звкрытие бд
     conn.close()
 
 if __name__ == "__main__":
     main()
+    
+'''
+код для заполнения файла для этого сприпта
+https://github.com/AnAsta6/Shtyka/blob/main/%D0%B7%D0%B0%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%B1%D0%B4
+'''
