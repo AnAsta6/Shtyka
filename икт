@@ -92,99 +92,39 @@ def main():
 
 
         elif choice == 2:
-            def shell_sort(apartments, key):
-                n = len(apartments)
-                gap = n // 2
-                while gap > 0:
-                    for i in range(gap, n):
-                        temp = apartments[i]
-                        j = i
-                        while j >= gap and (temp[key[0]] > apartments[j - gap][key[0]] or (
-                                temp[key[0]] == apartments[j - gap][key[0]] and temp[key[1]] < apartments[j - gap][
-                            key[1]])):
-                            apartments[j] = apartments[j - gap]
-                            j -= gap
-                        apartments[j] = temp
-                    gap //= 2
-
             def get_sorted_apartments(conn):
                 cursor = conn.execute("SELECT * FROM apartments")
                 apartments = cursor.fetchall()
                 shell_sort(apartments, ('rooms', 'price'))
                 return apartments
 
-            # Usage
-            conn = sqlite3.connect('apartments.db')
             sorted_apartments = get_sorted_apartments(conn)
             for apartment in sorted_apartments:
                 print(apartment)
-            conn.close()
-
 
         elif choice == 3:
-            def shell_sort(apartments, key):
-                n = len(apartments)
-                gap = n // 2
-                while gap > 0:
-                    for i in range(gap, n):
-                        temp = apartments[i]
-                        j = i
-                        while j >= gap and (temp[key[0]] > apartments[j - gap][key[0]] or (
-                                temp[key[0]] == apartments[j - gap][key[0]] and (
-                                temp[key[1]] > apartments[j - gap][key[1]] or (
-                                temp[key[1]] == apartments[j - gap][key[1]] and temp[key[2]] < apartments[j - gap][
-                            key[2]])))):
-                            apartments[j] = apartments[j - gap]
-                            j -= gap
-                        apartments[j] = temp
-                    gap //= 2
-
             def get_sorted_apartments(conn, num_rooms):
                 cursor = conn.execute("SELECT * FROM apartments WHERE rooms = ?", (num_rooms,))
                 apartments = cursor.fetchall()
-                shell_sort(apartments, ('floor', 'floors_in_building', 'price'))
+                shell_sort(apartments, ('floor', 'total_floors', 'price'))
                 return apartments
 
-            # Usage
-            conn = sqlite3.connect('apartments.db')
             num_rooms = int(input("Введите интересующее количесво комнат в квартире:: "))
             sorted_apartments = get_sorted_apartments(conn, num_rooms)
             for apartment in sorted_apartments:
                 print(apartment)
-            conn.close()
-
 
         elif choice == 4:
-
-            def shell_sort(apartments, key):
-                n = len(apartments)
-                gap = n // 2
-                while gap > 0:
-                    for i in range(gap, n):
-                        temp = apartments[i]
-                        j = i
-                        while j >= gap and (temp[key[0]] < apartments[j - gap][key[0]] or (
-                                temp[key[0]] == apartments[j - gap][key[0]] and temp[key[1]] > apartments[j - gap][
-                            key[1]]))):
-                            apartments[j] = apartments[j - gap]
-                        j -= gap
-                        apartments[j] = temp
-                        gap //= 2
-
             def get_sorted_apartments(conn, price_range):
                 cursor = conn.execute("SELECT * FROM apartments WHERE price >= ? AND price <= ?", price_range)
                 apartments = cursor.fetchall()
                 shell_sort(apartments, ('price', 'total_area'))
                 return apartments
 
-            # Usage
-            conn = sqlite3.connect('apartments.db')
             price_range = (int(input("Enter the minimum price: ")), int(input("Enter the maximum price: ")))
             sorted_apartments = get_sorted_apartments(conn, price_range)
             for apartment in sorted_apartments:
                 print(apartment)
-            conn.close()
-
 
         elif choice == 5:
             break
