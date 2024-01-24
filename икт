@@ -110,7 +110,7 @@ def main():
             for i in range(num_flats):
                 apartment = {}
                 while True:
-                    address = input("Введите адрес квартиры: ")
+                    address = input("Введите адрес квартиры(улица, д. №, кв. №): ")
                     if address:
                         break
                     print("Ошибка: адрес не может быть пустым.")
