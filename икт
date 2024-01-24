@@ -96,30 +96,96 @@ def main():
 
         #добавление квартир
         if choice == 1:
-            num_flats = int(input("Введите количество квартир для добавления: "))
+
+            while True:
+                try:
+                    num_flats = int(input("Введите количество квартир для добавления: "))
+                    if num_flats < 0:
+                        print("Количество квартир должно быть положительным числом.")
+                    else:
+                        break
+                except ValueError:
+                    print("Количество квартир должно быть целым числом.")
+
             for i in range(num_flats):
                 apartment = {}
-                address = input("Введите адрес квартиры: ")
+                while True:
+                    address = input("Введите адрес квартиры: ")
+                    if address:
+                        break
+                    print("Ошибка: адрес не может быть пустым.")
                 apartment['address'] = address
-                rooms = int(input("Введите количество комнат в квартире: "))
+
+                while True:
+                    rooms_input = input("Введите количество комнат в квартире: ")
+                    if rooms_input.isdigit():
+                        rooms = int(rooms_input)
+                        break
+                    print("Ошибка: количество комнат должно быть целым числом.")
                 apartment['rooms'] = rooms
-                total_area = float(input("Введите общую площадь в квартире: "))
+
+                while True:
+                    total_area_input = input("Введите общую площадь в квартире: ")
+                    if total_area_input.replace('.', '', 1).isdigit():
+                        total_area = float(total_area_input)
+                        break
+                    print("Ошибка: общая площадь должна быть числом.")
                 apartment['total_area'] = total_area
-                living_area = float(input("Введите жилую площадь в квартире: "))
+
+                while True:
+                    living_area_input = input("Введите жилую площадь в квартире: ")
+                    if living_area_input.replace('.', '', 1).isdigit():
+                        living_area = float(living_area_input)
+                        break
+                    print("Ошибка: жилая площадь должна быть числом.")
                 apartment['living_area'] = living_area
-                floor = int(input("Введите этаж: "))
+
+                while True:
+                    floor_input = input("Введите этаж: ")
+                    if floor_input.isdigit():
+                        floor = int(floor_input)
+                        break
+                    print("Ошибка: этаж должен быть целым числом.")
                 apartment['floor'] = floor
-                total_floors = int(input("Введите общее количество этажей в доме: "))
+
+                while True:
+                    total_floors_input = input("Введите общее количество этажей в доме: ")
+                    if total_floors_input.isdigit():
+                        total_floors = int(total_floors_input)
+                        break
+                    print("Ошибка: общее количество этажей должно быть целым числом.")
                 apartment['total_floors'] = total_floors
-                owner_lastname = input("Введите фамилию владельца квартиры: ")
+
+                while True:
+                    owner_lastname = input("Введите фамилию владельца квартиры: ")
+                    if owner_lastname:
+                        if owner_lastname.isalpha():
+                            break
+                    print("Ошибка: фамилия владельца должна состоять только из букв.")
                 apartment['owner_lastname'] = owner_lastname
-                price = int(input("Введите стоимость квартиры: "))
+
+                while True:
+                    price_input = input("Введите стоимость квартиры: ")
+                    if price_input.isdigit():
+                        price = int(price_input)
+                        break
+                    print("Ошибка: стоимость квартиры должна быть целым числом.")
                 apartment['price'] = price
+
                 insert_apartment(conn, apartment)
 
+
         #удоление квартиры по айди
+
         elif choice == 2:
-            id = int(input("Введите ID квартиры для удаления: "))
+
+            while True:
+                id = input("Введите ID квартиры для удаления: ")
+                if id.isdigit():
+                    id = int(id)
+                    break
+                print("Ошибка: ID квартиры для удаления должно быть целым числом.")
+
             delete_apartment(conn, id)
 
         # отсортированный список всех квартир
@@ -147,16 +213,70 @@ def main():
 
         # Обновить информацию по ID
         elif choice == 6:
-            id = int(input("Введите ID квартиры для обновления: "))
-            address = input("Введите новый адрес квартиры: ")
-            rooms = int(input("Введите новое количество комнат в квартире: "))
-            total_area = float(input("Введите новую общую площадь в квартире: "))
-            living_area = float(input("Введите новую жилую площадь в квартире: "))
-            floor = int(input("Введите новый этаж: "))
-            total_floors = int(input("Введите новое общее количество этажей в доме: "))
-            owner_lastname = input("Введите новую фамилию владельца квартиры: ")
-            price = int(input("Введите новую стоимость квартиры: "))
-            apartment = (address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price)
+
+            while True:
+                id_input = input("Введите ID квартиры для обновления: ")
+                if id_input.isdigit():
+                    id = int(id_input)
+                    break
+                print("Ошибка: ID квартиры для обновления должно быть целым числом.")
+
+            while True:
+                address = input("Введите новый адрес квартиры: ")
+                if address:
+                    break
+                print("Ошибка: адрес квартиры не может быть пустым.")
+
+            while True:
+                try:
+                    rooms = int(input("Введите новое количество комнат в квартире: "))
+                    break
+                except ValueError:
+                    print("Ошибка: количество комнат должно быть целым числом.")
+
+            while True:
+                try:
+                    total_area = float(input("Введите новую общую площадь в квартире: "))
+                    break
+                except ValueError:
+                    print("Ошибка: общая площадь должна быть числом.")
+
+            while True:
+                try:
+                    living_area = float(input("Введите новую жилую площадь в квартире: "))
+                    break
+                except ValueError:
+                    print("Ошибка: жилая площадь должна быть числом.")
+
+            while True:
+                try:
+                    floor = int(input("Введите новый этаж: "))
+                    break
+                except ValueError:
+                    print("Ошибка: этаж должен быть целым числом.")
+
+            while True:
+                try:
+                    total_floors = int(input("Введите новое общее количество этажей в доме: "))
+                    break
+                except ValueError:
+                    print("Ошибка: общее количество этажей должно быть целым числом.")
+
+            while True:
+                owner_lastname = input("Введите новую фамилию владельца квартиры: ")
+                if owner_lastname:
+                    if owner_lastname.isalpha():
+                        break
+                print("Ошибка: фамилия владельца должна состоять только из букв.")
+
+            while True:
+                try:
+                    price = int(input("Введите новую стоимость квартиры: "))
+                    break
+                except ValueError:
+                    print("Ошибка: стоимость квартиры должна быть целым числом.")
+
+            apartment = (id, address, rooms, total_area, living_area, floor, total_floors, owner_lastname, price)
             update_apartment(conn, id, apartment)
 
         # выход
@@ -171,7 +291,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+
 '''
 код для заполнения файла для этого сприпта
 https://github.com/AnAsta6/Shtyka/blob/main/%D0%B7%D0%B0%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%B1%D0%B4
